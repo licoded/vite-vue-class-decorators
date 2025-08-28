@@ -1,38 +1,38 @@
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import { createDecorator } from 'vue-class-component';
+<script lang="js">
 import HelloWorld from './components/HelloWorld.vue';
 
 // Declare Log decorator.
-export const Log = (prefix: string) => {
-  return createDecorator((options, key) => {
-    // Keep the original method for later.
-    const originalMethod = options.methods[key];
+const log = (logStr) => {
+  return function (target, methodName, descriptor) {
+    // 保留原始方法引用
+    const originalMethod = descriptor.value;
 
-    // Wrap the method with the logging logic.
-    options.methods[key] = function wrapperMethod(...args: any[]) {
-      // Print a log.
-      console.log('prefix: ', prefix);
-      console.log(`Invoked: ${key}(`, ...args, ')');
-
-      // Invoke the original method.
+    // 重写方法
+    descriptor.value = async function (...args) {
+      console.log(logStr);
       originalMethod.apply(this, args);
     };
-  });
+
+    return descriptor;
+  };
 };
 
-@Component({
+export default {
+  name: "App",
   components: {
     HelloWorld,
   },
-})
-export default class MyComp extends Vue {
-  // It prints a log when `hello` method is invoked.
-  @Log('prefix')
-  handleClick() {
-    // ...
-  }
-}
+
+  @log("mounted")
+  mounted() {
+    this.init();
+  },
+
+  methods: {
+    @log("init")
+    init() {},
+  },
+};
 </script>
 
 <template>
@@ -45,7 +45,6 @@ export default class MyComp extends Vue {
         <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
       </a>
     </div>
-    <button @click="handleClick">Click Me</button>
     <HelloWorld msg="Vite + Vue" />
   </div>
 </template>
